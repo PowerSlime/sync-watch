@@ -41,6 +41,10 @@ class Player {
         console.warn(this);
     }
 
+    _sendWindowMessage(method, params) {
+        window.postMessage({ key: method, value: params });
+    }
+
     _sendPostMessage(method, params) {
         this.playerFrame.postMessage(
             {
@@ -62,8 +66,12 @@ class Player {
         this._sendPostMessage("pause");
     }
 
-    _seek(time) {
+    _seek(time, sendWindowMessage = true) {
         this._sendPostMessage("seek", { seconds: time });
+
+        if (sendWindowMessage) {
+            this._sendWindowMessage("kodik_player_seek", { seconds: time });
+        }
     }
 
     get isPlaying() {
@@ -122,6 +130,7 @@ export default {
         this.sockets.subscribe(`room/${this.currentRoom}/player/stop`, this.onPlayerStop);
         this.sockets.subscribe(`room/${this.currentRoom}/player/seek`, this.onPlayerSeek);
     },
+
     beforeMount() {
         window.addEventListener("message", this.handlePlayerMessages);
     },
@@ -150,7 +159,7 @@ export default {
         },
 
         onPlayerSeek(time) {
-            this.player.methods.seek(time);
+            this.player.methods.seek(time, false);
         },
 
         // Handle user events
@@ -158,7 +167,7 @@ export default {
             const method = message.data.key;
             const value = message.data.value;
 
-            console.log(method);
+            console.log(method, value);
             // console.log(this.player.methods);
 
             switch (method) {
@@ -172,18 +181,35 @@ export default {
                     break;
                 }
 
+                case "kodik_player_current_episode": {
+                    this.player = new Player();
+                    break;
+                }
+
                 case "kodik_player_play": {
-                    this.$socket.emit(`room/player/play`, {
-                        room: this.currentRoom,
-                        time: this.player.currentTime,
-                    });
+                    if (this.player.currentTime !== null) {
+                        this.$socket.emit(`room/player/play`, {
+                            room: this.currentRoom,
+                            time: this.player.currentTime,
+                        });
+                    }
                     break;
                 }
 
                 case "kodik_player_pause": {
-                    this.$socket.emit(`room/player/stop`, {
+                    if (this.player.currentTime !== null) {
+                        this.$socket.emit(`room/player/stop`, {
+                            room: this.currentRoom,
+                            time: this.player.currentTime,
+                        });
+                    }
+                    break;
+                }
+
+                case "kodik_player_seek": {
+                    this.$socket.emit(`room/player/seek`, {
                         room: this.currentRoom,
-                        time: this.player.currentTime,
+                        time: value.seconds,
                     });
                     break;
                 }
