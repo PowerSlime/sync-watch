@@ -131,7 +131,6 @@ class Player extends EventEmitter {
 
     set currentTime(value) {
         if (this._currentTime > 0) {
-            console.log(this._currentTime - value);
             const wasSeeked = Math.abs(this._currentTime - value) > 1;
             if (wasSeeked) {
                 this.methods.pause();
