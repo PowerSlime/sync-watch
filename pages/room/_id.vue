@@ -57,7 +57,7 @@ class Player extends EventEmitter {
             {
                 key: "kodik_player_api",
                 value: {
-                    method: method,
+                    method,
                     ...params,
                 },
             },
@@ -173,7 +173,7 @@ export default {
         window.addEventListener("message", this.handlePlayerMessages);
     },
 
-    beforeDestroy: function() {
+    beforeDestroy() {
         this.$socket.emit("room/get", { id: this.currentRoom });
         this.sockets.unsubscribe(`room/${this.currentRoom}/update`);
         this.sockets.unsubscribe(`room/${this.currentRoom}/player/play`);

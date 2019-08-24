@@ -36,19 +36,19 @@ export default {
     },
 
     sockets: {
-        connect: function() {
+        connect() {
             this.$store.dispatch("socketConnected");
         },
 
-        reconnect: function() {
+        reconnect() {
             this.$store.dispatch("socketConnected");
         },
 
-        error: function() {
+        error() {
             this.$store.dispatch("socketDisconnected");
         },
 
-        disconnect: function() {
+        disconnect() {
             this.$store.dispatch("socketDisconnected");
         },
     },
