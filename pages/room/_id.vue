@@ -74,6 +74,7 @@ class Player extends EventEmitter {
     }
 
     _seek(time, sendWindowMessage = true) {
+        this._currentTime = time;
         this._sendPostMessage("seek", { seconds: time });
 
         if (sendWindowMessage) {
@@ -129,6 +130,15 @@ class Player extends EventEmitter {
     }
 
     set currentTime(value) {
+        if (this._currentTime > 0) {
+            console.log(this._currentTime - value);
+            const wasSeeked = Math.abs(this._currentTime - value) > 1;
+            if (wasSeeked) {
+                this.methods.pause();
+                this.methods.seek(value);
+            }
+        }
+
         this._currentTime = value;
     }
 }
@@ -197,6 +207,7 @@ export default {
         },
 
         onPlayerSeek(time) {
+            this.player.methods.pause();
             this.player.methods.seek(time, false);
         },
 
