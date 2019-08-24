@@ -18,7 +18,14 @@
                     </v-badge>
                 </div>
             </v-card-text>
-            <iframe v-if="room" id="player" name="player" :src="room.link" allowfullscreen></iframe>
+            <iframe
+                v-if="room"
+                id="player"
+                name="player"
+                :src="room.link"
+                allowfullscreen
+                @load="onIframeLoad"
+            ></iframe>
             <v-card-text v-else>
                 Комната не существует
             </v-card-text>
@@ -36,11 +43,14 @@ class Player extends EventEmitter {
         this._isPlaying = false;
         this._currentTime = null;
         this._isLoaded = false;
+        this._season = null;
+        this._episode = null;
 
         this.methods = {
             play: this._play.bind(this),
             pause: this._pause.bind(this),
             seek: this._seek.bind(this),
+            changeEpisode: this._changeEpisode.bind(this),
         };
 
         this._handleLoadingIntervalId = null;
@@ -79,6 +89,23 @@ class Player extends EventEmitter {
 
         if (sendWindowMessage) {
             this._sendWindowMessage("kodik_player_seek", { seconds: time });
+        }
+    }
+
+    _changeEpisode(season, episode, sendPostMessage = true) {
+        if (season === undefined && episode === undefined) {
+            return null;
+        }
+
+        if (season === this.season && episode === this.episode) {
+            return null;
+        }
+
+        this.season = season;
+        this.episode = episode;
+
+        if (sendPostMessage) {
+            this._sendPostMessage("change_episode", { season, episode });
         }
     }
 
@@ -140,6 +167,22 @@ class Player extends EventEmitter {
 
         this._currentTime = value;
     }
+
+    get season() {
+        return this._season;
+    }
+
+    set season(season) {
+        this._season = season;
+    }
+
+    get episode() {
+        return this._episode;
+    }
+
+    set episode(episode) {
+        this._episode = episode;
+    }
 }
 
 export default {
@@ -176,6 +219,7 @@ export default {
         this.sockets.subscribe(`room/${this.currentRoom}/player/play`, this.onPlayerPlay);
         this.sockets.subscribe(`room/${this.currentRoom}/player/stop`, this.onPlayerStop);
         this.sockets.subscribe(`room/${this.currentRoom}/player/seek`, this.onPlayerSeek);
+        this.sockets.subscribe(`room/${this.currentRoom}/player/changeEpisode`, this.onPlayerChangeEpisode);
     },
 
     beforeMount() {
@@ -188,12 +232,17 @@ export default {
         this.sockets.unsubscribe(`room/${this.currentRoom}/player/play`);
         this.sockets.unsubscribe(`room/${this.currentRoom}/player/stop`);
         this.sockets.unsubscribe(`room/${this.currentRoom}/player/seek`);
+        this.sockets.unsubscribe(`room/${this.currentRoom}/player/changeEpisode`);
         window.removeEventListener("message", this.handlePlayerMessages);
     },
 
     methods: {
         onRoomUpdate(data) {
             this.room = data;
+        },
+
+        onIframeLoad() {
+            this.player.methods.changeEpisode(this.room.season, this.room.episode);
         },
 
         // Handle server events
@@ -208,6 +257,10 @@ export default {
         onPlayerSeek(time) {
             this.player.methods.pause();
             this.player.methods.seek(time, false);
+        },
+
+        onPlayerChangeEpisode({ season, episode }) {
+            this.player.methods.changeEpisode(season, episode);
         },
 
         // Handle user events
@@ -232,6 +285,17 @@ export default {
 
                 case "kodik_player_current_episode": {
                     this.player = new Player();
+                    const season = value.season;
+                    const episode = value.episode;
+
+                    this.player.season = season;
+                    this.player.episode = episode;
+
+                    this.$socket.emit(`room/player/changeEpisode`, {
+                        room: this.currentRoom,
+                        season,
+                        episode,
+                    });
                     break;
                 }
 
