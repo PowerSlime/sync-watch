@@ -7,9 +7,9 @@
                 :loading="loading"
                 :search-input.sync="searchInput"
                 :item-text="getItemText"
-                label="Название фильма"
+                label="Название фильма / ID на кинопоиске"
                 no-data-text="Ничего не найдено"
-                cache-items
+                no-filter
                 return-object
             >
                 <template v-slot:item="{ item }">
