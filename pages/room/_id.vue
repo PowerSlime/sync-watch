@@ -27,16 +27,23 @@
 </template>
 
 <script>
-class Player {
+import EventEmitter from "eventemitter3";
+
+class Player extends EventEmitter {
     constructor() {
+        super();
+
         this._isPlaying = false;
         this._currentTime = null;
+        this._isLoaded = false;
 
         this.methods = {
             play: this._play.bind(this),
             pause: this._pause.bind(this),
             seek: this._seek.bind(this),
         };
+
+        this._handleLoadingIntervalId = null;
 
         console.warn(this);
     }
@@ -71,6 +78,37 @@ class Player {
 
         if (sendWindowMessage) {
             this._sendWindowMessage("kodik_player_seek", { seconds: time });
+        }
+    }
+
+    _handleEndOfLoading() {
+        // For explanation check `set isLoaded` method
+        if (!this._handleLoadingIntervalId) {
+            this._handleLoadingIntervalId = setInterval(() => {
+                this.methods.pause();
+            }, 200);
+        }
+    }
+
+    get isLoaded() {
+        return this._isLoaded;
+    }
+
+    set isLoaded(bool) {
+        // To handle loaded event we start sending to player `pause` commands.
+        // When it starts react to it (we receive `kodik_player_pause` event)
+        // It means that player is loaded and ready to listen our commands.
+        this._isLoaded = bool;
+
+        if (this._isLoaded === false) {
+            this.emit("loading");
+            this._handleEndOfLoading();
+        } else {
+            clearInterval(this._handleLoadingIntervalId);
+            this.emit("loaded");
+            this._handleLoadingIntervalId = null;
+            this.methods.pause();
+            this.methods.seek(this.currentTime || 0);
         }
     }
 
@@ -171,12 +209,13 @@ export default {
             // console.log(this.player.methods);
 
             switch (method) {
-                case "kodik_player_time_update": {
-                    if (this.player.currentTime === null) {
-                        this.player.methods.pause();
-                        this.player.methods.seek(0);
-                    }
+                case "kodik_player_duration_update":
+                case "kodik_player_video_started": {
+                    this.player.isLoaded = false;
+                    break;
+                }
 
+                case "kodik_player_time_update": {
                     this.player.currentTime = value;
                     break;
                 }
@@ -187,7 +226,7 @@ export default {
                 }
 
                 case "kodik_player_play": {
-                    if (this.player.currentTime !== null) {
+                    if (this.player.isLoaded) {
                         this.$socket.emit(`room/player/play`, {
                             room: this.currentRoom,
                             time: this.player.currentTime,
@@ -197,11 +236,14 @@ export default {
                 }
 
                 case "kodik_player_pause": {
-                    if (this.player.currentTime !== null) {
+                    if (this.player.isLoaded) {
                         this.$socket.emit(`room/player/stop`, {
                             room: this.currentRoom,
                             time: this.player.currentTime,
                         });
+                    } else {
+                        // For explanation check the player's `set isLoaded` method
+                        this.player.isLoaded = true;
                     }
                     break;
                 }
