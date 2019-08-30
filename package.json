@@ -1,6 +1,6 @@
 {
   "name": "sync-watch",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "description": "Yet another service for sync player between people",
   "author": "PowerSlime",
   "private": true,
@@ -18,21 +18,21 @@
     "eventemitter3": "^4.0.0",
     "express": "^4.16.4",
     "lodash": "^4.17.15",
-    "nuxt": "^2.9.1",
+    "nuxt": "^2.9.2",
     "qs": "^6.8.0",
     "vue-socket.io": "^3.0.7"
   },
   "devDependencies": {
     "@nuxtjs/eslint-config": "^1.1.2",
     "@nuxtjs/eslint-module": "^1.0.0",
-    "@nuxtjs/vuetify": "^1.3.3",
-    "babel-eslint": "^10.0.1",
+    "@nuxtjs/vuetify": "^1.6.1",
+    "babel-eslint": "^10.0.3",
     "consola": "^2.10.1",
     "eslint": "^6.2.2",
     "eslint-config-prettier": "^6.1.0",
     "eslint-plugin-nuxt": ">=0.4.2",
     "eslint-plugin-prettier": "^3.0.1",
-    "eslint-plugin-sort-class-members": "^1.5.0",
+    "eslint-plugin-sort-class-members": "^1.6.0",
     "nodemon": "^1.18.9",
     "prettier": "^1.16.4"
   }
