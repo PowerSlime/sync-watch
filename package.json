@@ -1,6 +1,6 @@
 {
   "name": "sync-watch",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Yet another service for sync player between people",
   "author": "PowerSlime",
   "private": true,
