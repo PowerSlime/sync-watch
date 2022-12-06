@@ -19,7 +19,7 @@
     "express": "^4.16.4",
     "lodash": "^4.17.19",
     "nuxt": "^2.9.2",
-    "qs": "^6.8.0",
+    "qs": "^6.8.3",
     "vue-socket.io": "^3.0.7"
   },
   "devDependencies": {
